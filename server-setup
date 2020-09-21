@@ -1,0 +1,28 @@
+#!/bin/bash
+
+PROXY_URL=
+PAPER_URL=
+SERVER_NAMES=()
+
+if [ "$1" = "-c" ]; then
+
+	if [ $# -gt "$2" ]; then
+		for ((i = 0 ; i+3 <= $# ; i++)); do
+			n=$(($i + 3))
+			SERVER_NAMES[$i]+=${!n}
+
+
+		done
+		echo ${SERVER_NAMES[*]}
+	else
+		echo -e "[ERROR] you must give a name to each servers"
+	fi
+elif [ "$1" = "-d" ]; then
+	echo "this feature has yet to be implemented"
+elif [ "$1" = "-u" ]; then
+	echo "this feature has yet to be implemented"
+elif [ "$1" = "-h" ] || [ "$1" = "-help" ]; then
+	echo "help page"
+else
+	echo -e "[ERROR] Unknow argument, try -h"
+fi
