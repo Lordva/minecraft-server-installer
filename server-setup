@@ -6,6 +6,21 @@ SERVER_PATH=/srv/mc
 SERVER_NAMES=()
 START_FILE=start.sh
 RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
+LOG_FILE="raw.txt"
+
+eula(){
+        read -p "Do you accept the eula ? [yes/no]: " key
+                case $key in
+                        y ) return 0 ;;
+                        Y ) return 0 ;;
+                        yes ) return 0 ;;
+                        YES ) return 0 ;;
+                        Yes ) return 0 ;;
+                        * ) return 1 ;;
+                esac           
+}
+
+
 
 if [ "$1" = "-c" ]; then
 	if [ "$EUID" -ne 0 ]; then
@@ -33,7 +48,7 @@ if [ "$1" = "-c" ]; then
 				echo "[LOG] created $SERVER_PATH/$i"
 				if [ ! -e "paperclip.jar" ]; then
 					echo "[LOG] Downloading the latest version of PaperMC"
-					wget $PAPER_URL > /dev/null
+					wget $PAPER_URL >> $LOG_FILE
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
 						echo "------------------------------------------------------------"
@@ -54,7 +69,7 @@ if [ "$1" = "-c" ]; then
 					echo "[LOG] $START_FILE exist"
 				else
 					echo "[LOG] $START_FILE doesn't exist, downloading it from GitHub..."
-					wget $RAW_START > /dev/null
+					wget $RAW_START >> $LOG_FILE
 					chmod +x $START_FILE
 					if [ ! -x $START_FILE ]; then
 						echo "-------------------------------------------------"
@@ -63,11 +78,71 @@ if [ "$1" = "-c" ]; then
 						rm -rf $SERVER_PATH"/"$i
 						exit
 					else
-						echo "[Successfully downloaded the start.sh script from GitHub]"
+						echo "[Successfully downloaded/chmod the start.sh script from GitHub]"
 					fi
 				fi
 				cp $START_FILE $SERVER_PATH"/"$i
-					
+				echo "[LOG] running the server to generate eula.txt"
+				echo "sh $SERVER_PATH/$i/$START_FILE"
+				echo ""
+				cd $SERVER_PATH"/"$i
+				sh $START_FILE
+				RESULT=$?
+				if [ $RESULT != 0 ]; then
+					echo "---------------------------------------------"
+					echo "[ERROR] $START_FILE could not be executed...|"
+					echo "---------------------------------------------"
+					echo "cleaning the mess before exit"
+					rm -rf $SERVER_PATH"/"$i
+					exit
+				fi
+
+				if [ ! -e "eula.txt" ]; then
+					echo "---------------------------"
+					echo "[ERROR] eula.txt not found|"
+					echo "---------------------------"
+					echo "cleaning the mess before leaving"
+					rm -rf $SERVER_PATH"/"$i
+					exit
+				else
+					echo "[LOG] eula.txt was successfully generated"
+					echo "[LOG] setting eula.txt to True..."
+					eula
+					RESULT=$?
+				fi
+				if [ $RESULT != 0 ]; then
+					echo "-----------------------------"
+					echo "[error] eula wasn't accepted|"
+					echo "-----------------------------"
+					echo "cleaning mess before leaving"
+					rm -rf $SERVER_PATH"/"$i & exit
+				else
+					sed -i -e 's/false/true/g' eula.txt
+        				RESULT=$?
+        				if [ $RESULT != 0 ]; then
+                				echo "--------------------------------------"
+                				echo "[ERROR] eula could not be set to true|"
+                				echo "--------------------------------------"
+                				echo "cleaning the mess before leaving"
+                				rm -rf $SERVER_PATH"/"$i & exit
+        				else
+                				echo "[LOG] eula.txt has been successfully set to True"
+        				fi
+				fi
+				echo "[LOG] Restarting the server to complete install"
+				sh $START_FILE
+                                RESULT=$?
+                                if [ $RESULT != 0 ]; then
+                                        echo "---------------------------------------------"
+                                        echo "[ERROR] $START_FILE could not be executed...|"
+                                        echo "---------------------------------------------"
+                                        echo "cleaning the mess before exit"
+                                        rm -rf $SERVER_PATH"/"$i
+                                        exit
+                                fi
+
+
+
 				if [ $2 -lt 2 ]; then
 					echo "[INFO] Only one server, no need for a proxy"
 				else
@@ -88,3 +163,4 @@ elif [ "$1" = "-h" ] || [ "$1" = "-help" ]; then
 else
 	echo -e "[ERROR] Unknow argument, try -h"
 fi
+
