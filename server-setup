@@ -39,23 +39,23 @@ if [ "$1" = "-c" ]; then
 		sleep 1
 
 		for i in ${SERVER_NAMES[@]}; do
-			echo "[LOG] creating folder $SERVER_PATH/$i"
-			mkdir -p $SERVER_PATH"/"$i
-			if [ ! -d $SERVER_PATH"/"$i ]; then
-				echo -e "[ERROR] The creation of $SERVER_PATH/$i has failed !"
+			echo "[LOG] creating folder ${SERVER_PATH:?}/$i"
+			mkdir -p ${SERVER_PATH:?}"/"$i
+			if [ ! -d ${SERVER_PATH:?}"/"$i ]; then
+				echo -e "[ERROR] The creation of ${SERVER_PATH:?}/$i has failed !"
 				exit
 			else
-				echo "[LOG] created $SERVER_PATH/$i"
+				echo "[LOG] created ${SERVER_PATH:?}/$i"
 				if [ ! -e "paperclip.jar" ]; then
 					echo "[LOG] Downloading the latest version of PaperMC"
-					wget $PAPER_URL >> $LOG_FILE
+					wget $PAPER_URL >/dev/null 2>&1
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
 						echo "------------------------------------------------------------"
 						echo "[ERROR] failed to download the latest stable build of paper|"
 						echo "------------------------------------------------------------"
 						echo "cleaning the mess before stoping the script"
-						rmdir $SERVER_PATH"/"$i
+						rmdir ${SERVER_PATH:?}"/"$i
 						exit
 					else
 						echo "[LOG] Successfully downloaded the latest Paper build !"
@@ -63,7 +63,7 @@ if [ "$1" = "-c" ]; then
 					fi
 				fi
 
-				cp paperclip.jar $SERVER_PATH"/"$i"/server.jar"
+				cp paperclip.jar ${SERVER_PATH:?}"/"$i"/server.jar"
 				
 				if [ -e $START_FILE ]; then
 					echo "[LOG] $START_FILE exist"
@@ -75,17 +75,17 @@ if [ "$1" = "-c" ]; then
 						echo "-------------------------------------------------"
 						echo "[ERROR] Download has failed / is not executable |"
 						echo "-------------------------------------------------"
-						rm -rf $SERVER_PATH"/"$i
+						rm -rf ${SERVER_PATH:?}"/"$i
 						exit
 					else
 						echo "[Successfully downloaded/chmod the start.sh script from GitHub]"
 					fi
 				fi
-				cp $START_FILE $SERVER_PATH"/"$i
+				cp $START_FILE ${SERVER_PATH:?}"/"$i
 				echo "[LOG] running the server to generate eula.txt"
-				echo "sh $SERVER_PATH/$i/$START_FILE"
+				echo "sh ${SERVER_PATH:?}/$i/$START_FILE"
 				echo ""
-				cd $SERVER_PATH"/"$i
+				cd ${SERVER_PATH:?}"/"$i
 				sh $START_FILE
 				RESULT=$?
 				if [ $RESULT != 0 ]; then
@@ -93,7 +93,7 @@ if [ "$1" = "-c" ]; then
 					echo "[ERROR] $START_FILE could not be executed...|"
 					echo "---------------------------------------------"
 					echo "cleaning the mess before exit"
-					rm -rf $SERVER_PATH"/"$i
+					rm -rf ${SERVER_PATH:?}"/"$i
 					exit
 				fi
 
@@ -102,7 +102,7 @@ if [ "$1" = "-c" ]; then
 					echo "[ERROR] eula.txt not found|"
 					echo "---------------------------"
 					echo "cleaning the mess before leaving"
-					rm -rf $SERVER_PATH"/"$i
+					rm -rf ${SERVER_PATH:?}"/"$i
 					exit
 				else
 					echo "[LOG] eula.txt was successfully generated"
@@ -115,7 +115,7 @@ if [ "$1" = "-c" ]; then
 					echo "[error] eula wasn't accepted|"
 					echo "-----------------------------"
 					echo "cleaning mess before leaving"
-					rm -rf $SERVER_PATH"/"$i & exit
+					rm -rf ${SERVER_PATH:?}"/"$i & exit
 				else
 					sed -i -e 's/false/true/g' eula.txt
         				RESULT=$?
@@ -124,7 +124,7 @@ if [ "$1" = "-c" ]; then
                 				echo "[ERROR] eula could not be set to true|"
                 				echo "--------------------------------------"
                 				echo "cleaning the mess before leaving"
-                				rm -rf $SERVER_PATH"/"$i & exit
+                				rm -rf ${SERVER_PATH:?}"/"$i & exit
         				else
                 				echo "[LOG] eula.txt has been successfully set to True"
         				fi
@@ -137,7 +137,7 @@ if [ "$1" = "-c" ]; then
                                         echo "[ERROR] $START_FILE could not be executed...|"
                                         echo "---------------------------------------------"
                                         echo "cleaning the mess before exit"
-                                        rm -rf $SERVER_PATH"/"$i
+                                        rm -rf ${SERVER_PATH:?}"/"$i
                                         exit
                                 fi
 
