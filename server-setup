@@ -63,7 +63,7 @@ if [ "$1" = "-c" ]; then
 					fi
 				fi
 
-				cp paperclip.jar ${SERVER_PATH:?}"/"$i"/server.jar"
+				cp paperclip.jar ${SERVER_PATH:?}"/$i/server.jar"
 				
 				if [ -e $START_FILE ]; then
 					echo "[LOG] $START_FILE exist"
