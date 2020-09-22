@@ -1,19 +1,81 @@
 #!/bin/bash
 
-PROXY_URL=
-PAPER_URL=
+PROXY_URL="https://papermc.io/ci/job/Waterfall/lastStableBuild/artifact/Waterfall.jar"
+PAPER_URL="https://papermc.io/ci/job/Paper-1.16/lastStableBuild/artifact/paperclip.jar"
+SERVER_PATH=/srv/mc
 SERVER_NAMES=()
+START_FILE=start.sh
+RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
 
 if [ "$1" = "-c" ]; then
-
-	if [ $# -gt "$2" ]; then
+	if [ "$EUID" -ne 0 ]; then
+		echo "-------------------------------------------------"
+		echo -e "[ERROR] you need to be root to run this script  |"
+		echo "-------------------------------------------------"
+		echo "Retry with sudo, if you dont have permission please contact your server administrator"
+		exit
+	fi
+	if (( "$#" == "$2 + 2" )); then
 		for ((i = 0 ; i+3 <= $# ; i++)); do
 			n=$(($i + 3))
 			SERVER_NAMES[$i]+=${!n}
-
-
 		done
-		echo ${SERVER_NAMES[*]}
+		echo "[LOG] you are creating those servers: ${SERVER_NAMES[*]}"
+		sleep 1
+
+		for i in ${SERVER_NAMES[@]}; do
+			echo "[LOG] creating folder $SERVER_PATH/$i"
+			mkdir -p $SERVER_PATH"/"$i
+			if [ ! -d $SERVER_PATH"/"$i ]; then
+				echo -e "[ERROR] The creation of $SERVER_PATH/$i has failed !"
+				exit
+			else
+				echo "[LOG] created $SERVER_PATH/$i"
+				if [ ! -e "paperclip.jar" ]; then
+					echo "[LOG] Downloading the latest version of PaperMC"
+					wget $PAPER_URL > /dev/null
+					RESULT=$?
+					if [ $RESULT != 0 ]; then
+						echo "------------------------------------------------------------"
+						echo "[ERROR] failed to download the latest stable build of paper|"
+						echo "------------------------------------------------------------"
+						echo "cleaning the mess before stoping the script"
+						rmdir $SERVER_PATH"/"$i
+						exit
+					else
+						echo "[LOG] Successfully downloaded the latest Paper build !"
+						sleep 1
+					fi
+				fi
+
+				cp paperclip.jar $SERVER_PATH"/"$i"/server.jar"
+				
+				if [ -e $START_FILE ]; then
+					echo "[LOG] $START_FILE exist"
+				else
+					echo "[LOG] $START_FILE doesn't exist, downloading it from GitHub..."
+					wget $RAW_START > /dev/null
+					chmod +x $START_FILE
+					if [ ! -x $START_FILE ]; then
+						echo "-------------------------------------------------"
+						echo "[ERROR] Download has failed / is not executable |"
+						echo "-------------------------------------------------"
+						rm -rf $SERVER_PATH"/"$i
+						exit
+					else
+						echo "[Successfully downloaded the start.sh script from GitHub]"
+					fi
+				fi
+				cp $START_FILE $SERVER_PATH"/"$i
+					
+				if [ $2 -lt 2 ]; then
+					echo "[INFO] Only one server, no need for a proxy"
+				else
+					echo "[LOG] $2 Servers installed, installing a proxy"
+				fi
+			fi
+			
+		done
 	else
 		echo -e "[ERROR] you must give a name to each servers"
 	fi
