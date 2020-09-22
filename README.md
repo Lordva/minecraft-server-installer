@@ -9,6 +9,7 @@ status : 30%
 - [x] auto download of the latest version of paper
 - [x] creating servers files and managing permissions
 - [x] Bunggecord download/installation
+- [x] Accept Eula automaticly
 - [ ] creating a service
 - [ ] installing screen / managing server console w/ it
 - [ ] help page
