@@ -128,25 +128,20 @@ if [ "$1" = "-c" ]; then
         				else
                 				echo "[LOG] eula.txt has been successfully set to True"
         				fi
+
+					echo "[LOG] Restarting server to complete the install"
+					echo "[LOG] Installing screen"
+					apt install screen -y
+					echo "[LOG] starting screen session"
+					screen mc-$i -DmS ./start.sh
+					sleep
 				fi
-				echo "[LOG] Restarting the server to complete install"
-				sh $START_FILE
-                                RESULT=$?
-                                if [ $RESULT != 0 ]; then
-                                        echo "---------------------------------------------"
-                                        echo "[ERROR] $START_FILE could not be executed...|"
-                                        echo "---------------------------------------------"
-                                        echo "cleaning the mess before exit"
-                                        rm -rf ${SERVER_PATH:?}"/"$i
-                                        exit
-                                fi
-
-
-
 				if [ $2 -lt 2 ]; then
 					echo "[INFO] Only one server, no need for a proxy"
 				else
-					echo "[LOG] $2 Servers installed, installing a proxy"
+
+					echo "[LOG] $2 Server installed, configuring $i for proxy"
+					sed -i -e 's/bungeecord: false/bungeecord: true/g' spigot.yml
 				fi
 			fi
 			
