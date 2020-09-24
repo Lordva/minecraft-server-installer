@@ -7,6 +7,7 @@ SERVER_NAMES=()
 START_FILE=start.sh
 RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
 LOG_FILE="raw.txt"
+PORT=25565
 
 eula(){
         read -p "Do you accept the eula ? [yes/no]: " key
@@ -69,7 +70,7 @@ if [ "$1" = "-c" ]; then
 					echo "[LOG] $START_FILE exist"
 				else
 					echo "[LOG] $START_FILE doesn't exist, downloading it from GitHub..."
-					wget $RAW_START >> $LOG_FILE
+					wget $RAW_START 2>&1 >/dev/null
 					chmod +x $START_FILE
 					if [ ! -x $START_FILE ]; then
 						echo "-------------------------------------------------"
@@ -83,10 +84,10 @@ if [ "$1" = "-c" ]; then
 				fi
 				cp $START_FILE ${SERVER_PATH:?}"/"$i
 				echo "[LOG] running the server to generate eula.txt"
-				echo "sh ${SERVER_PATH:?}/$i/$START_FILE"
+				echo "[LOG] sh ${SERVER_PATH:?}/$i/$START_FILE"
 				echo ""
 				cd ${SERVER_PATH:?}"/"$i
-				sh $START_FILE
+				sh $START_FILE 2>&1 >/dev/null
 				RESULT=$?
 				if [ $RESULT != 0 ]; then
 					echo "---------------------------------------------"
@@ -131,10 +132,12 @@ if [ "$1" = "-c" ]; then
 
 					echo "[LOG] Restarting server to complete the install"
 					echo "[LOG] Installing screen"
-					apt install screen -y
+					apt install screen -y 2>&1 >/dev/null
 					echo "[LOG] starting screen session"
-					screen mc-$i -DmS ./start.sh
-					sleep
+					screen -DmS mc-$i ./start.sh &
+					sleep 15
+					screen -p 0 -S mc-$i -X eval 'stuff "stop"\015'
+					echo "[LOG] Server is fully installed"
 				fi
 				if [ $2 -lt 2 ]; then
 					echo "[INFO] Only one server, no need for a proxy"
@@ -142,6 +145,44 @@ if [ "$1" = "-c" ]; then
 
 					echo "[LOG] $2 Server installed, configuring $i for proxy"
 					sed -i -e 's/bungeecord: false/bungeecord: true/g' spigot.yml
+					RESULT=$?
+                                        if [ $RESULT != 0 ]; then
+                                                echo "--------------------------------------"
+                                                echo "[ERROR] bungeecord be set to true|"
+                                                echo "--------------------------------------"
+                                                echo "cleaning the mess before leaving"
+                                                rm -rf ${SERVER_PATH:?}"/"$i & exit
+                                        else
+                                                echo "[LOG] bungeecord has been successfully set to True"
+                                        fi
+						
+					sed -i -e 's/online-mode=true/online-mode=false/g' server.properties
+					RESULT=$?
+                                        if [ $RESULT != 0 ]; then
+                                                echo "--------------------------------------"
+                                                echo "[ERROR] online mode could not be set to false|"
+                                                echo "--------------------------------------"
+                                                echo "cleaning the mess before leaving"
+                                                rm -rf ${SERVER_PATH:?}"/"$i & exit
+                                        else
+                                                echo "[LOG] online mode has been successfully set to false"
+                                        fi
+
+					echo "setting port used by server (default is incremented from 25565)"
+					echo $PORT
+					PORT=$((PORT+1))
+					sed -i -e "s/server-port=25565/server-port=$PORT/g" server.properties
+					RESULT=$?
+					if [ $RESULT != 0 ]; then
+						echo "-----------------------------------------"
+						echo "[ERROR] could not change the server port|"
+						echo "-----------------------------------------"
+						rm -rf ${SERVER_PATH:?}"/"$i & exit
+					else
+						echo "[LOG] the server port has been changed to $PORT"
+					fi
+
+					echo "[LOG] Server $2 has been configured for proxy"
 				fi
 			fi
 			
