@@ -10,8 +10,8 @@ status : 30%
 - [x] creating servers files and managing permissions
 - [x] Bunggecord download/installation
 - [x] Accept Eula automaticly
+- [x] installing screen / managing server console w/ it
 - [ ] creating a service
-- [ ] installing screen / managing server console w/ it
 - [ ] help page
 - [ ] server update
 - [ ] basic plugin install
