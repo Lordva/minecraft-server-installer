@@ -1,13 +1,15 @@
 #!/bin/bash
 
-PROXY_URL="https://papermc.io/ci/job/Waterfall/lastStableBuild/artifact/Waterfall.jar"
+PROXY_URL="https://papermc.io/ci/job/Waterfall/lastStableBuild/artifact/Waterfall-Proxy/bootstrap/target/Waterfall.jar"
 PAPER_URL="https://papermc.io/ci/job/Paper-1.16/lastStableBuild/artifact/paperclip.jar"
 SERVER_PATH=/srv/mc
+PROXY_PATH=/srv/proxy
 SERVER_NAMES=()
 START_FILE=start.sh
 RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
 LOG_FILE="raw.txt"
 PORT=25565
+TIME=$(date +"%T")
 
 eula(){
         read -r -p "Do you accept the eula ? [yes/no]: " key
@@ -40,15 +42,15 @@ if [ "$1" = "-c" ]; then
 		sleep 1
 
 		for i in ${SERVER_NAMES[@]}; do
-			echo "[LOG] creating folder ${SERVER_PATH:?}/$i"
+			echo "[$TIME LOG] creating folder ${SERVER_PATH:?}/$i"
 			mkdir -p ${SERVER_PATH:?}"/"$i
 			if [ ! -d ${SERVER_PATH:?}"/"$i ]; then
 				echo -e "[ERROR] The creation of ${SERVER_PATH:?}/$i has failed !"
 				exit
 			else
-				echo "[LOG] created ${SERVER_PATH:?}/$i"
+				echo "[$TIME LOG] created ${SERVER_PATH:?}/$i"
 				if [ ! -e "paperclip.jar" ]; then
-					echo "[LOG] Downloading the latest version of PaperMC"
+					echo "[$TIME LOG] Downloading the latest version of PaperMC"
 					wget $PAPER_URL >/dev/null 2>&1
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
@@ -59,7 +61,7 @@ if [ "$1" = "-c" ]; then
 						rmdir ${SERVER_PATH:?}"/"$i
 						exit
 					else
-						echo "[LOG] Successfully downloaded the latest Paper build !"
+						echo "[$TIME LOG] Successfully downloaded the latest Paper build !"
 						sleep 1
 					fi
 				fi
@@ -67,9 +69,9 @@ if [ "$1" = "-c" ]; then
 				cp paperclip.jar ${SERVER_PATH:?}"/$i/server.jar"
 				
 				if [ -e $START_FILE ]; then
-					echo "[LOG] $START_FILE exist"
+					echo "[$TIME LOG] $START_FILE exist"
 				else
-					echo "[LOG] $START_FILE doesn't exist, downloading it from GitHub..."
+					echo "[$TIME LOG] $START_FILE doesn't exist, downloading it from GitHub..."
 					wget $RAW_START 2>&1 >/dev/null
 					chmod +x $START_FILE
 					if [ ! -x $START_FILE ]; then
@@ -83,9 +85,8 @@ if [ "$1" = "-c" ]; then
 					fi
 				fi
 				cp $START_FILE ${SERVER_PATH:?}"/"$i
-				echo "[LOG] running the server to generate eula.txt"
-				echo "[LOG] sh ${SERVER_PATH:?}/$i/$START_FILE"
-				echo ""
+				echo "[$TIME LOG] running the server to generate eula.txt"
+
 				cd ${SERVER_PATH:?}"/"$i
 				sh $START_FILE 2>&1 >/dev/null
 				RESULT=$?
@@ -106,8 +107,8 @@ if [ "$1" = "-c" ]; then
 					rm -rf ${SERVER_PATH:?}"/"$i
 					exit
 				else
-					echo "[LOG] eula.txt was successfully generated"
-					echo "[LOG] setting eula.txt to True..."
+					echo "[$TIME LOG] eula.txt was successfully generated"
+					echo "[$TIME LOG] setting eula.txt to True..."
 					eula
 					RESULT=$?
 				fi
@@ -127,23 +128,23 @@ if [ "$1" = "-c" ]; then
                 				echo "cleaning the mess before leaving"
                 				rm -rf ${SERVER_PATH:?}"/"$i & exit
         				else
-                				echo "[LOG] eula.txt has been successfully set to True"
+                				echo "[$TIME LOG] eula.txt has been successfully set to True"
         				fi
 
-					echo "[LOG] Restarting server to complete the install"
-					echo "[LOG] Installing screen"
+					echo "[$TIME LOG] Restarting server to complete the install"
+					echo "[$TIME LOG] Installing screen"
 					apt install screen -y 2>&1 >/dev/null
-					echo "[LOG] starting screen session"
+					echo "[$TIME LOG] starting screen session"
 					screen -DmS mc-$i ./start.sh &
 					sleep 15
 					screen -p 0 -S mc-$i -X eval 'stuff "stop"\015'
-					echo "[LOG] Server is fully installed"
+					echo "[$TIME LOG] Server is fully installed"
 				fi
 				if [ $2 -lt 2 ]; then
 					echo "[INFO] Only one server, no need for a proxy"
 				else
 
-					echo "[LOG] $2 Server installed, configuring $i for proxy"
+					echo "[$TIME LOG] $2 Server installed, configuring $i for proxy"
 					sed -i -e 's/bungeecord: false/bungeecord: true/g' spigot.yml
 					RESULT=$?
                                         if [ $RESULT != 0 ]; then
@@ -153,7 +154,7 @@ if [ "$1" = "-c" ]; then
                                                 echo "cleaning the mess before leaving"
                                                 rm -rf ${SERVER_PATH:?}"/"$i & exit
                                         else
-                                                echo "[LOG] bungeecord has been successfully set to True"
+                                                echo "[$TIME LOG] bungeecord has been successfully set to True"
                                         fi
 						
 					sed -i -e 's/online-mode=true/online-mode=false/g' server.properties
@@ -165,7 +166,7 @@ if [ "$1" = "-c" ]; then
                                                 echo "cleaning the mess before leaving"
                                                 rm -rf ${SERVER_PATH:?}"/"$i & exit
                                         else
-                                                echo "[LOG] online mode has been successfully set to false"
+                                                echo "[$TIME LOG] online mode has been successfully set to false"
                                         fi
 
 					echo "setting port used by server (default is incremented from 25565)"
@@ -178,14 +179,62 @@ if [ "$1" = "-c" ]; then
 						echo "-----------------------------------------"
 						rm -rf ${SERVER_PATH:?}"/"$i & exit
 					else
-						echo "[LOG] the server port has been changed to $PORT"
+						echo "[$TIME LOG] the server port has been changed to $PORT"
 					fi
 
-					echo "[LOG] Server $2 has been configured for proxy"
+					echo "[$TIME LOG] Server $2 has been configured for proxy"
 				fi
 			fi
 			
 		done
+		if [ $2 -gt 1 ]; then
+			echo "[$TIME LOG] Begining proxy install"
+
+			echo "[$TIME LOG] creating folder ${SERVER_PATH:?}"
+                        mkdir -p ${PROXY_PATH:?}
+                        if [ ! -d ${PROXY_PATH:?} ]; then
+                                echo -e "[ERROR] The creation of ${PROXY_PATH:?} has failed !"
+                                exit
+                        else
+                                echo "[$TIME LOG] created ${PROXY_PATH:?}"
+                                if [ ! -e "Waterfall.jar" ]; then
+                                        echo "[$TIME LOG] Downloading the latest version of Waterfall"
+                                        wget $PROXY_URL >/dev/null 2>&1
+                                        RESULT=$?
+                                        if [ $RESULT != 0 ]; then
+                                                echo "----------------------------------------------------------------"
+                                                echo "[ERROR] failed to download the latest stable build of Waterfall|"
+                                                echo "----------------------------------------------------------------"
+                                                echo "cleaning the mess before stoping the script"
+                                                rmdir ${PROXY_PATH:?}
+                                                exit
+                                        else
+                                                echo "[$TIME LOG] Successfully downloaded the latest Waterfall build !"
+                                                sleep 1
+                                        fi
+					cp Waterfall.jar ${PROXY_PATH:?}"/proxy.jar"
+					cp $START_FILE ${PROXY_PATH:?}
+					echo "[$TIME LOG] Configuring proxy for startup"
+					cd ${PROXY_PATH:?}
+					sed -i -e 's/server.jar/proxy.jar/g' $START_FILE
+					RESULT=$?
+                                        if [ $RESULT != 0 ]; then
+                                                echo "------------------------------------------"
+                                                echo "[ERROR] could not edit start.sh for proxy|"
+                                                echo "------------------------------------------"
+                                                rm -rf ${SERVER_PATH:?}"/"$i & exit
+                                        else
+                                                echo "[$TIME LOG] proxy ready for startup !"
+						screen -DmS bungeecord ./start.sh &
+						sleep 30
+						screen -p 0 -S bungeecord -X eval 'stuff "end"\015'
+						echo "[$TIME LOG] Starting to edit config.yml"
+
+                                        fi
+                                fi
+
+			fi
+		fi
 	else
 		echo -e "[ERROR] you must give a name to each servers"
 	fi
