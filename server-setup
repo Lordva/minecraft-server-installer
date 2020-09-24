@@ -10,7 +10,7 @@ LOG_FILE="raw.txt"
 PORT=25565
 
 eula(){
-        read -p "Do you accept the eula ? [yes/no]: " key
+        read -r -p "Do you accept the eula ? [yes/no]: " key
                 case $key in
                         y ) return 0 ;;
                         Y ) return 0 ;;
@@ -169,7 +169,6 @@ if [ "$1" = "-c" ]; then
                                         fi
 
 					echo "setting port used by server (default is incremented from 25565)"
-					echo $PORT
 					PORT=$((PORT+1))
 					sed -i -e "s/server-port=25565/server-port=$PORT/g" server.properties
 					RESULT=$?
