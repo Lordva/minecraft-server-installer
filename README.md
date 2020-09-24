@@ -1,5 +1,7 @@
 # minecraft-server-installer
 
+[![CodeFactor](https://www.codefactor.io/repository/github/lordva/minecraft-server-installer/badge)](https://www.codefactor.io/repository/github/lordva/minecraft-server-installer)
+
 This python script automate the creation of minecraft paper servers.
 
 ### currently in developpement, not working /!\
