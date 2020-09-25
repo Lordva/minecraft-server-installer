@@ -132,12 +132,12 @@ if [ "$1" = "-c" ]; then
         				fi
 
 					echo "[$(date +"%T") LOG] Restarting server to complete the install"
-					if where screem !=0  then
+					if where screem !=0 ;  then
 						echo "[$(date +"%T") LOG] Screen alredy installed"
 					else
 						
 						echo "[$(date +"%T") LOG] Installing screen"
-						if apt -h != 0 then
+						if apt -h != 0 ; then
 							apt install screen -y 2>&1 >/dev/null
 						else
 							yum install screen -y 2&1 >/dev/null
