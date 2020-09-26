@@ -37,4 +37,4 @@ Here is an exemple of the command above
 sudo bash server-setup -c 3 lobby survival creative
 ```
 
-Have fun w/ i
+Have fun w/ it
