@@ -4,8 +4,8 @@
 
 This python script automate the creation of minecraft paper servers.
 
-### currently in developpement, not working /!\
-status : 30%
+### currently in developpement, only partialy working /!\
+status : 50%
 ## Roadmap
 
 - [x] auto download of the latest version of paper
