@@ -1,0 +1,24 @@
+[Unit]
+Description=BungeeCord Proxy Server
+After=network.target
+
+[Service]
+WorkingDirectory=/srv/proxy/
+
+User=root
+Group=root
+
+Restart=always
+RestartSec=5
+
+ExecStart=/usr/bin/screen -DmS bungeecord ./start.sh
+
+ExecStop=/usr/bin/screen -p 0 -S bungeecord -X eval 'stuff "end"\015'
+
+TimeoutStopSec=25
+KillMode=control-group
+
+
+[Install]
+WantedBy=multi-user.target
+

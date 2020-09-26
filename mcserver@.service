@@ -1,0 +1,26 @@
+[Unit]
+Description=Minecraft Server: %i
+After=network.target
+
+[Service]
+WorkingDirectory=/srv/mc/%i
+
+User=root
+Group=root
+
+Restart=always
+RestartSec=5
+
+ExecStart=/usr/bin/screen -DmS mc-%i ./start.sh
+
+ExecStop=/usr/bin/screen -p 0 -S mc-%i -X eval 'stuff "save-all"\015'
+ExecStop=/bin/sleep 5
+ExecStop=/usr/bin/screen -p 0 -S mc-%i -X eval 'stuff "stop"\015'
+
+TimeoutStopSec=25
+KillMode=control-group
+
+
+[Install]
+WantedBy=multi-user.target
+
