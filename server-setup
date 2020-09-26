@@ -9,7 +9,8 @@ START_FILE=start.sh
 RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
 LOG_FILE="raw.txt"
 PORT=25565
-TIME=$(date +"%T")
+START_TIME=$(date +"%T")
+DEFAULT_DIR=$(pwd)
 
 eula(){
         read -r -p "Do you accept the eula ? [yes/no]: " key
@@ -27,10 +28,10 @@ eula(){
 
 if [ "$1" = "-c" ]; then
 	if [ "$EUID" -ne 0 ]; then
-		echo "-------------------------------------------------"
-		echo -e "[ERROR] you need to be root to run this script  |"
-		echo "-------------------------------------------------"
-		echo "Retry with sudo, if you dont have permission please contact your server administrator"
+		echo -e "-------------------------------------------------"
+		echo -e -e "[ERROR] you need to be root to run this script  |"
+		echo -e "-------------------------------------------------"
+		echo -e "Retry with sudo, if you dont have permission please contact your server administrator"
 		exit
 	fi
 	if (( "$#" == "$2 + 2" )); then
@@ -38,221 +39,235 @@ if [ "$1" = "-c" ]; then
 			n=$(($i + 3))
 			SERVER_NAMES[$i]+=${!n}
 		done
-		echo "[LOG] you are creating those servers: ${SERVER_NAMES[*]}"
-		sleep 1
+		echo -e "[LOG] you are creating those servers: ${SERVER_NAMES[*]}"
 
 		for i in ${SERVER_NAMES[@]}; do
-			echo "[$(date +"%T") LOG] creating folder ${SERVER_PATH:?}/$i"
+			echo -e "[$(date +"%T") LOG] creating folder ${SERVER_PATH:?}/$i"
 			mkdir -p ${SERVER_PATH:?}"/"$i
 			if [ ! -d ${SERVER_PATH:?}"/"$i ]; then
 				echo -e "[ERROR] The creation of ${SERVER_PATH:?}/$i has failed !"
 				exit
 			else
-				echo "[$(date +"%T") LOG] created ${SERVER_PATH:?}/$i"
+				echo -e "[$(date +"%T") LOG] created ${SERVER_PATH:?}/$i"
 				if [ ! -e "paperclip.jar" ]; then
-					echo "[$(date +"%T") LOG] Downloading the latest version of PaperMC"
+					echo -e "[$(date +"%T") LOG] Downloading the latest version of PaperMC"
 					wget $PAPER_URL >/dev/null 2>&1
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
-						echo "------------------------------------------------------------"
-						echo "[ERROR] failed to download the latest stable build of paper|"
-						echo "------------------------------------------------------------"
-						echo "cleaning the mess before stoping the script"
+						echo -e "------------------------------------------------------------"
+						echo -e "[ERROR] failed to download the latest stable build of paper|"
+						echo -e "------------------------------------------------------------"
+						echo -e "cleaning the mess before stoping the script"
 						rmdir ${SERVER_PATH:?}"/"$i
 						exit
 					else
-						echo "[$(date +"%T") LOG] Successfully downloaded the latest Paper build !"
-						sleep 1
+						echo -e "[$(date +"%T") LOG] Successfully downloaded the latest Paper build !"
 					fi
 				fi
 
 				cp paperclip.jar ${SERVER_PATH:?}"/$i/server.jar"
 				
 				if [ -e $START_FILE ]; then
-					echo "[$(date +"%T") LOG] $START_FILE exist"
+					echo -e "[$(date +"%T") LOG] $START_FILE exist"
 				else
-					echo "[$(date +"%T") LOG] $START_FILE doesn't exist, downloading it from GitHub..."
+					echo -e "[$(date +"%T") LOG] $START_FILE doesn't exist, downloading it from GitHub..."
 					wget $RAW_START 2>&1 >/dev/null
 					chmod +x $START_FILE
 					if [ ! -x $START_FILE ]; then
-						echo "-------------------------------------------------"
-						echo "[ERROR] Download has failed / is not executable |"
-						echo "-------------------------------------------------"
+						echo -e "-------------------------------------------------"
+						echo -e "[ERROR] Download has failed / is not executable |"
+						echo -e "-------------------------------------------------"
 						rm -rf ${SERVER_PATH:?}"/"$i
 						exit
 					else
-						echo "[Successfully downloaded/chmod the start.sh script from GitHub]"
+						echo -e "[Successfully downloaded/chmod the start.sh script from GitHub]"
 					fi
 				fi
 				cp $START_FILE ${SERVER_PATH:?}"/"$i
-				echo "[$(date +"%T") LOG] running the server to generate eula.txt"
+				echo -e "[$(date +"%T") LOG] running the server to generate eula.txt"
 
 				cd ${SERVER_PATH:?}"/"$i
 				sh $START_FILE 2>&1 >/dev/null
 				RESULT=$?
 				if [ $RESULT != 0 ]; then
-					echo "---------------------------------------------"
-					echo "[ERROR] $START_FILE could not be executed...|"
-					echo "---------------------------------------------"
-					echo "cleaning the mess before exit"
+					echo -e "---------------------------------------------"
+					echo -e "[ERROR] $START_FILE could not be executed...|"
+					echo -e "---------------------------------------------"
+					echo -e "cleaning the mess before exit"
 					rm -rf ${SERVER_PATH:?}"/"$i
 					exit
 				fi
 
 				if [ ! -e "eula.txt" ]; then
-					echo "---------------------------"
-					echo "[ERROR] eula.txt not found|"
-					echo "---------------------------"
-					echo "cleaning the mess before leaving"
+					echo -e "---------------------------"
+					echo -e "[ERROR] eula.txt not found|"
+					echo -e "---------------------------"
+					echo -e "cleaning the mess before leaving"
 					rm -rf ${SERVER_PATH:?}"/"$i
 					exit
 				else
-					echo "[$(date +"%T") LOG] eula.txt was successfully generated"
-					echo "[$(date +"%T") LOG] setting eula.txt to True..."
+					echo -e "[$(date +"%T") LOG] eula.txt was successfully generated"
+					echo -e "[$(date +"%T") LOG] setting eula.txt to True..."
 					eula
 					RESULT=$?
 				fi
 				if [ $RESULT != 0 ]; then
-					echo "-----------------------------"
-					echo "[error] eula wasn't accepted|"
-					echo "-----------------------------"
-					echo "cleaning mess before leaving"
+					echo -e "-----------------------------"
+					echo -e "[error] eula wasn't accepted|"
+					echo -e "-----------------------------"
+					echo -e "cleaning mess before leaving"
 					rm -rf ${SERVER_PATH:?}"/"$i & exit
 				else
 					sed -i -e 's/false/true/g' eula.txt
         				RESULT=$?
         				if [ $RESULT != 0 ]; then
-                				echo "--------------------------------------"
-                				echo "[ERROR] eula could not be set to true|"
-                				echo "--------------------------------------"
-                				echo "cleaning the mess before leaving"
+                				echo -e "--------------------------------------"
+                				echo -e "[ERROR] eula could not be set to true|"
+                				echo -e "--------------------------------------"
+                				echo -e "cleaning the mess before leaving"
                 				rm -rf ${SERVER_PATH:?}"/"$i & exit
         				else
-                				echo "[$(date +"%T") LOG] eula.txt has been successfully set to True"
+                				echo -e "[$(date +"%T") LOG] eula.txt has been successfully set to True"
         				fi
 
-					echo "[$(date +"%T") LOG] Restarting server to complete the install"
-					if where screem !=0 ;  then
-						echo "[$(date +"%T") LOG] Screen alredy installed"
+					echo -e "[$(date +"%T") LOG] Restarting server to complete the install"
+					if ls /etc/screenrc ;  then
+						echo -e "[$(date +"%T") LOG] Screen alredy installed"
 					else
 						
-						echo "[$(date +"%T") LOG] Installing screen"
-						if apt -h != 0 ; then
-							apt install screen -y 2>&1 >/dev/null
+						echo -e "[$(date +"%T") LOG] Installing screen"
+						if apt -h 2>&1 >/dev/null != 0 ; then
+							apt install screen -y >/dev/null 2>/dev/null
 						else
 							yum install screen -y 2&1 >/dev/null
 						fi
 					fi
-					echo "[$(date +"%T") LOG] starting screen session"
+					echo -e "[$(date +"%T") LOG] starting screen session"
 					screen -DmS mc-$i ./start.sh &
 					sleep 15
 					screen -p 0 -S mc-$i -X eval 'stuff "stop"\015'
-					echo "[$(date +"%T") LOG] Server is fully installed"
+					echo -e "[$(date +"%T") LOG] Server is fully installed"
 				fi
 				if [ $2 -lt 2 ]; then
-					echo "[INFO] Only one server, no need for a proxy"
+					echo -e "[INFO] Only one server, no need for a proxy"
 				else
 
-					echo "[$(date +"%T") LOG] $2 Server installed, configuring $i for proxy"
+					echo -e "[$(date +"%T") LOG] $2 Server installed, configuring $i for proxy"
 					sed -i -e 's/bungeecord: false/bungeecord: true/g' spigot.yml
 					RESULT=$?
                                         if [ $RESULT != 0 ]; then
-                                                echo "--------------------------------------"
-                                                echo "[ERROR] bungeecord be set to true|"
-                                                echo "--------------------------------------"
-                                                echo "cleaning the mess before leaving"
+                                                echo -e "--------------------------------------"
+                                                echo -e "[ERROR] bungeecord be set to true|"
+                                                echo -e "--------------------------------------"
+                                                echo -e "cleaning the mess before leaving"
                                                 rm -rf ${SERVER_PATH:?}"/"$i & exit
                                         else
-                                                echo "[$(date +"%T") LOG] bungeecord has been successfully set to True"
+                                                echo -e "[$(date +"%T") LOG] bungeecord has been successfully set to True"
                                         fi
 						
 					sed -i -e 's/online-mode=true/online-mode=false/g' server.properties
 					RESULT=$?
                                         if [ $RESULT != 0 ]; then
-                                                echo "--------------------------------------"
-                                                echo "[ERROR] online mode could not be set to false|"
-                                                echo "--------------------------------------"
-                                                echo "cleaning the mess before leaving"
+                                                echo -e "--------------------------------------"
+                                                echo -e "[ERROR] online mode could not be set to false|"
+                                                echo -e "--------------------------------------"
+                                                echo -e "cleaning the mess before leaving"
                                                 rm -rf ${SERVER_PATH:?}"/"$i & exit
                                         else
-                                                echo "[$(date +"%T") LOG] online mode has been successfully set to false"
+                                                echo -e "[$(date +"%T") LOG] online mode has been successfully set to false"
                                         fi
 
-					echo "setting port used by server (default is incremented from 25565)"
-					PORT=$((PORT+1))
+					echo -e "setting port used by server (default is incremented from 25565)"
+
 					sed -i -e "s/server-port=25565/server-port=$PORT/g" server.properties
+					PORT=$((PORT+1))
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
-						echo "-----------------------------------------"
-						echo "[ERROR] could not change the server port|"
-						echo "-----------------------------------------"
+						echo -e "-----------------------------------------"
+						echo -e "[ERROR] could not change the server port|"
+						echo -e "-----------------------------------------"
 						rm -rf ${SERVER_PATH:?}"/"$i & exit
 					else
-						echo "[$(date +"%T") LOG] the server port has been changed to $PORT"
+						echo -e "[$(date +"%T") LOG] the server port has been changed to $PORT"
 					fi
 
-					echo "[$(date +"%T") LOG] Server $2 has been configured for proxy"
+					echo -e "[$(date +"%T") LOG] Server $2 has been configured for proxy"
 				fi
 			fi
 			
 		done
-		if [ $2 -gt 1 ]; then
-			echo "[$(date +"%T") LOG] Begining proxy install"
 
-			echo "[$(date +"%T") LOG] creating folder ${SERVER_PATH:?}"
+		if [ $2 -gt 1 ]; then
+			cd $DEFAULT_DIR
+			echo ""
+			echo ""
+			echo -e "[$(date +"%T") LOG] Begining proxy install"
+
+			echo -e "[$(date +"%T") LOG] creating folder ${SERVER_PATH:?}"
                         mkdir -p ${PROXY_PATH:?}
                         if [ ! -d ${PROXY_PATH:?} ]; then
                                 echo -e "[ERROR] The creation of ${PROXY_PATH:?} has failed !"
                                 exit
                         else
-                                echo "[$(date +"%T") LOG] created ${PROXY_PATH:?}"
+                                echo -e "[$(date +"%T") LOG] created ${PROXY_PATH:?}"
                                 if [ ! -e "Waterfall.jar" ]; then
-                                        echo "[$(date +"%T") LOG] Downloading the latest version of Waterfall"
+                                        echo -e "[$(date +"%T") LOG] Downloading the latest version of Waterfall"
                                         wget $PROXY_URL >/dev/null 2>&1
                                         RESULT=$?
                                         if [ $RESULT != 0 ]; then
-                                                echo "----------------------------------------------------------------"
-                                                echo "[ERROR] failed to download the latest stable build of Waterfall|"
-                                                echo "----------------------------------------------------------------"
-                                                echo "cleaning the mess before stoping the script"
+                                                echo -e "----------------------------------------------------------------"
+                                                echo -e "[ERROR] failed to download the latest stable build of Waterfall|"
+                                                echo -e "----------------------------------------------------------------"
+                                                echo -e "cleaning the mess before stoping the script"
                                                 rmdir ${PROXY_PATH:?}
                                                 exit
                                         else
-                                                echo "[$(date +"%T") LOG] Successfully downloaded the latest Waterfall build !"
-                                                sleep 1
+                                                echo -e "[$(date +"%T") LOG] Successfully downloaded the latest Waterfall build !"
                                         fi
-					cp Waterfall.jar ${PROXY_PATH:?}"/proxy.jar"
-					cp $START_FILE ${PROXY_PATH:?}
-					echo "[$(date +"%T") LOG] Configuring proxy for startup"
-					cd ${PROXY_PATH:?}
-					sed -i -e 's/server.jar/proxy.jar/g' $START_FILE
-					RESULT=$?
-                                        if [ $RESULT != 0 ]; then
-                                                echo "------------------------------------------"
-                                                echo "[ERROR] could not edit start.sh for proxy|"
-                                                echo "------------------------------------------"
-                                                rm -rf ${SERVER_PATH:?}"/"$i & exit
-                                        else
-                                                echo "[$(date +"%T") LOG] proxy ready for startup !"
-						screen -DmS bungeecord ./start.sh &
-						sleep 30
-						screen -p 0 -S bungeecord -X eval 'stuff "end"\015'
-						echo "[$(date +"%T") LOG] Starting to edit config.yml"
+				else
+					echo -e "[$(date +"%T") LOG] Waterfall is already downloaded"
+				fi
+				cp Waterfall.jar ${PROXY_PATH:?}"/proxy.jar"
+				cp $START_FILE ${PROXY_PATH:?}
+				echo -e "[$(date +"%T") LOG] Configuring proxy for startup"
+				cd ${PROXY_PATH:?}
+				sed -i -e 's/server.jar/proxy.jar/g' $START_FILE
+				RESULT=$?
+                                if [ $RESULT != 0 ]; then
+                                        echo -e "------------------------------------------"
+                                        echo -e "[ERROR] could not edit start.sh for proxy|"
+                                        echo -e "------------------------------------------"
+                                        rm -rf ${SERVER_PATH:?}"/"$i & exit
+                                else
+                                        echo -e "[$(date +"%T") LOG] proxy ready for startup !"
+				fi
+				screen -DmS bungeecord ./start.sh &
+				sleep 30
+				screen -p 0 -S bungeecord -X eval 'stuff "end"\015'
+				echo -e "[$(date +"%T") LOG] Starting to edit config.yml"
+				sed -i -e "s/lobby:/${SERVER_NAMES}:/g" config.yml
+				port=25565
+				for x in ${SERVER_NAMES[@]:1} ; do
+					port=$(($port + 1))
 
-                                        fi
-                                fi
-
+					read -r -p "Enter the motd for $x: " MOTD
+					sed -i "24 a \ \ $x:" config.yml
+					sed -i "25 a \ \ \ \ motd: $MOTD" config.yml
+					sed -i "26 a \ \ \ \ address: localhost:$port" config.yml
+					sed -i "27 a \ \ \ \ restricted: true" config.yml
+				done
+				echo -e "[$(date +"%T") LOG] Proxy setup complete !"
 			fi
 		fi
 	else
-		echo -e "[ERROR] you must give a name to each servers"
+		echo -e -e "[ERROR] you must give a name to each servers"
 	fi
 elif [ "$1" = "-d" ]; then
-	echo "this feature has yet to be implemented"
+	echo -e "this feature has yet to be implemented"
 elif [ "$1" = "-u" ]; then
-	echo "this feature has yet to be implemented"
+	echo -e "this feature has yet to be implemented"
 elif [ "$1" = "-h" ] || [ "$1" = "-help" ]; then
-	echo "help page"
+	echo -e "help page"
 else
 	echo -e "[ERROR] Unknow argument, try -h"
 fi
