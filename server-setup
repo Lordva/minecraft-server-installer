@@ -6,13 +6,21 @@ SERVER_PATH=/srv/mc
 PROXY_PATH=/srv/proxy
 SERVER_NAMES=()
 START_FILE=start.sh
+
 RAW_START="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/start.sh"
+PROXY_SERVICE_RAW="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/bungeecord.service"
+SERVICE_RAW="https://raw.githubusercontent.com/Lordva/minecraft-server-installer/master/mcserver%40.service"
+
 LOG_FILE="raw.txt"
 PORT=25565
 START_TIME=$(date +"%T")
 DEFAULT_DIR=$(pwd)
+EULA_ACCEPTED=false
 
 eula(){
+	if [ $EULA_ACCEPTED = true ]; then
+		return 0
+	fi
         read -r -p "Do you accept the eula ? [yes/no]: " key
                 case $key in
                         y ) return 0 ;;
@@ -71,7 +79,7 @@ if [ "$1" = "-c" ]; then
 					echo -e "[$(date +"%T") LOG] $START_FILE exist"
 				else
 					echo -e "[$(date +"%T") LOG] $START_FILE doesn't exist, downloading it from GitHub..."
-					wget $RAW_START 2>&1 >/dev/null
+					wget $RAW_START >/dev/null
 					chmod +x $START_FILE
 					if [ ! -x $START_FILE ]; then
 						echo -e "-------------------------------------------------"
@@ -118,6 +126,7 @@ if [ "$1" = "-c" ]; then
 					echo -e "cleaning mess before leaving"
 					rm -rf ${SERVER_PATH:?}"/"$i & exit
 				else
+					EULA_ACCEPTED=true
 					sed -i -e 's/false/true/g' eula.txt
         				RESULT=$?
         				if [ $RESULT != 0 ]; then
@@ -131,7 +140,7 @@ if [ "$1" = "-c" ]; then
         				fi
 
 					echo -e "[$(date +"%T") LOG] Restarting server to complete the install"
-					if ls /etc/screenrc ;  then
+					if ls /etc/screenrc >/dev/null ;  then
 						echo -e "[$(date +"%T") LOG] Screen alredy installed"
 					else
 						
@@ -178,9 +187,9 @@ if [ "$1" = "-c" ]; then
                                         fi
 
 					echo -e "setting port used by server (default is incremented from 25565)"
-
-					sed -i -e "s/server-port=25565/server-port=$PORT/g" server.properties
 					PORT=$((PORT+1))
+					sed -i -e "s/server-port=25565/server-port=$PORT/g" server.properties
+					#PORT=$((PORT+1))
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
 						echo -e "-----------------------------------------"
@@ -199,6 +208,7 @@ if [ "$1" = "-c" ]; then
 
 		if [ $2 -gt 1 ]; then
 			cd $DEFAULT_DIR
+			PROXY_NEED=True
 			echo ""
 			echo ""
 			echo -e "[$(date +"%T") LOG] Begining proxy install"
@@ -241,24 +251,88 @@ if [ "$1" = "-c" ]; then
                                 else
                                         echo -e "[$(date +"%T") LOG] proxy ready for startup !"
 				fi
+				
 				screen -DmS bungeecord ./start.sh &
 				sleep 30
 				screen -p 0 -S bungeecord -X eval 'stuff "end"\015'
 				echo -e "[$(date +"%T") LOG] Starting to edit config.yml"
+				
 				sed -i -e "s/lobby:/${SERVER_NAMES}:/g" config.yml
-				port=25565
+				sed -i -e "s/lobby/${SERVER_NAMES}/g" config.yml
+				sed -i -e "s/address: localhost:25565/address: localhost:25566/g" config.yml
+				sed -i -e "s/ip_forward: false/ip_forward: true/g" config.yml
+				sed -i -e "s/force_default_server: false/force_default_server: true/g" config.yml
+				sed -i -e "s/host: 0.0.0.0:25577/host: 0.0.0.0:25565/g" config.yml
+
+				read -r -p "Enter the serveur MOTD: " MOTD
+				sed -i -e "s/motd: '&1Just another Waterfall - Forced Host/motd: '$MOTD'/g" config.yml
+				port=25566
 				for x in ${SERVER_NAMES[@]:1} ; do
 					port=$(($port + 1))
 
-					read -r -p "Enter the motd for $x: " MOTD
 					sed -i "24 a \ \ $x:" config.yml
-					sed -i "25 a \ \ \ \ motd: $MOTD" config.yml
+					sed -i "25 a \ \ \ \ motd: '$MOTD'" config.yml
 					sed -i "26 a \ \ \ \ address: localhost:$port" config.yml
 					sed -i "27 a \ \ \ \ restricted: true" config.yml
 				done
 				echo -e "[$(date +"%T") LOG] Proxy setup complete !"
 			fi
 		fi
+		cd $DEFAULT_DIR
+		echo -e "[$(date +"%T") LOG] Service setup startup..."
+		if [ ! -e mcserver@.service ]; then
+			echo -e "[$(date +"%T") LOG] Could not find mcserver@.service, downloading it form GitHub"
+			if wget $SERVICE_RAW ; then
+				echo -e "[$(date +"%T") LOG] Successfully downloaded mcserver@.service"
+			else
+				echo -e "--------------------------------"
+				echo -e "[ERROR] could not download file|"
+				echo -e "--------------------------------"
+				exit 1
+			fi
+		fi
+		if cp mcserver@.service /etc/systemd/system/ ; then
+			echo -e "[$(date +"%T") LOG] Successfully moved mcserver@.service to location"
+		else
+			echo -e "----------------------------"
+                        echo -e "[ERROR] could not move file|"
+                        echo -e "----------------------------"
+                        exit 1
+		fi
+		
+		if [ $PROXY_NEED = True ]; then
+			if [ ! -e bungeecord.service ]; then
+                        	echo -e "[$(date +"%T") LOG] Could not find bungeecord.service, downloading it form GitHub"
+                        	if wget $PROXY_SERVICE_RAW ; then
+                                	echo -e "[$(date +"%T") LOG] Successfully downloaded bungeecord.service"
+                        	else
+                                	echo -e "------------------------------------"
+                                	echo -e "[ERROR] could not download the file|"
+                                	echo -e "------------------------------------"
+                                	exit 1
+                        	fi
+                	fi      
+                	if cp bungeecord.service /etc/systemd/system/ ; then
+                        	echo -e "[$(date +"%T") LOG] Successfully moved bungeecord.service to location"
+                	else
+                        	echo -e "----------------------------"
+                        	echo -e "[ERROR] could not move file|"
+                        	echo -e "----------------------------"
+                       		exit 1
+                	fi
+		fi
+		systemctl daemon-reload
+		echo -e "[$(date +"%T") LOG] Starting server(s)..."
+		if [ $PROXY_NEED = True ]; then 
+			systemctl start bungeecord 
+		fi
+		for i in ${SERVER_NAMES[@]}; do 
+			systemctl start mcserver@$i 
+		done
+		echo -e "[$(date +"%T") LOG] Script ended at $(date +"%T") \n If you've encontered any unexpected beheviour please report in at https://github.com/Lordva/minecraft-server-installer/"
+		exit 0
+
+
 	else
 		echo -e -e "[ERROR] you must give a name to each servers"
 	fi
