@@ -14,6 +14,7 @@ status : 70%
 - [x] Accept Eula automaticly
 - [x] installing screen / managing server console w/ it
 - [x] creating a service
+- [x] java install (apt support only)
 - [ ] help page
 - [ ] server update
 - [ ] basic plugin install

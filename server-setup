@@ -35,6 +35,16 @@ eula(){
                 esac           
 }
 
+function java_install(){
+	if java -version >/dev/null 
+	then
+		echo -e "[$(date +"%T") LOG] Java is installed"
+	else
+		echo -e "[$(date +"%T") LOG] Java is not installed"
+		apt-get install openjdk-11-jre-headless -y
+	fi
+}
+
 
 # looking for the firt argument ( -c or -h )  
 
@@ -47,6 +57,7 @@ if [ "$1" = "-c" ]; then
 		echo -e "Retry with sudo, if you dont have permission please contact your server administrator"
 		exit
 	fi
+	java_install
 	# checking if every server has a name and adding it to the SERVER_NAMES array
 	if (( "$#" == "$2 + 2" )); then
 		for ((i = 0 ; i+3 <= $# ; i++)); do
