@@ -15,7 +15,7 @@ status : 70%
 - [x] installing screen / managing server console w/ it
 - [x] creating a service
 - [x] java install (apt support only)
-- [ ] help page
+- [x] help page
 - [ ] server update
 - [ ] basic plugin install
 - [ ] delete server functionality

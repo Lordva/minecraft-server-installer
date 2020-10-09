@@ -398,7 +398,13 @@ elif [ "$1" = "-d" ]; then
 elif [ "$1" = "-u" ]; then
 	echo -e "this feature has yet to be implemented"
 elif [ "$1" = "-h" ] || [ "$1" = "-help" ]; then
-	echo -e "help page"
+	echo -e "Welcome to the help page"
+	echo -e "arguments list : -h, -d, -u, -c"
+	echo -e "-h : Show this page"
+	echo -e "-d : Delete a server [NOT SUPPORTED]"
+	echo -e "-u : Update a server [NOT SUPPORTED]"
+	echo -e "-c : Create a server, usage : bash server-setup -c [number of servers] [list of server names]"
+	echo -e "	Exemple : sudo bash server-setup -c 3 lobby survival creative"
 else
 	echo -e "[ERROR] Unknow argument, try -h"
 fi
