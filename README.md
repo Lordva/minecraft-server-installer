@@ -1,5 +1,6 @@
 # minecraft-server-installer
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1b28d94d0b4446f4bd797988bfc2e0ac)](https://app.codacy.com/gh/Lordva/minecraft-server-installer?utm_source=github.com&utm_medium=referral&utm_content=Lordva/minecraft-server-installer&utm_campaign=Badge_Grade_Settings)
 [![CodeFactor](https://www.codefactor.io/repository/github/lordva/minecraft-server-installer/badge)](https://www.codefactor.io/repository/github/lordva/minecraft-server-installer)
 
 This python script automate the creation of minecraft paper servers.
