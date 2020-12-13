@@ -64,7 +64,7 @@ if [ "$1" = "-c" ]; then
 			n=$(($i + 3))
 			SERVER_NAMES[$i]+=${!n}
 		done
-		echo -e "[LOG] you are creating those servers: ${SERVER_NAMES[*]}"
+		echo -e "[$(date +"%T") LOG] you are creating those servers: ${SERVER_NAMES[*]}"
 		
 		# creation of the server folders
 		for i in ${SERVER_NAMES[@]}; do
@@ -355,7 +355,7 @@ if [ "$1" = "-c" ]; then
 		fi
 		
 		# bungeecord service config
-		if [ $PROXY_NEED = True ]; then
+		if [[ $PROXY_NEED = "True" ]]; then
 			if [ ! -e bungeecord.service ]; then
                         	echo -e "[$(date +"%T") LOG] Could not find bungeecord.service, downloading it form GitHub"
                         	if wget $PROXY_SERVICE_RAW ; then
@@ -380,7 +380,7 @@ if [ "$1" = "-c" ]; then
 		# Starting everything (might not work depending on your ram, default ram in start.sh files is 2G per server, I strongly recomender lowering it)
 		systemctl daemon-reload 
 		echo -e "[$(date +"%T") LOG] Starting server(s)..."
-		if [ $PROXY_NEED = True ]; then 
+		if [[ $PROXY_NEED = "True" ]]; then 
 			systemctl start bungeecord 
 		fi
 		for i in ${SERVER_NAMES[@]}; do 
