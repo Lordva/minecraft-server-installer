@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PROXY_URL="https://papermc.io/ci/job/Waterfall/lastStableBuild/artifact/Waterfall-Proxy/bootstrap/target/Waterfall.jar"
-PAPER_URL="https://papermc.io/ci/job/Paper-1.16/lastStableBuild/artifact/paperclip.jar"
+PROXY_URL="https://papermc.io/api/v1/waterfall/${VERSION}/latest/download"
+PAPER_URL="https://papermc.io/api/v1/paper/${VERSION}/latest/download"
 SERVER_PATH=/srv/mc
 PROXY_PATH=/srv/proxy
 SERVER_NAMES=()
@@ -45,6 +45,17 @@ function java_install(){
 	fi
 }
 
+function argument(){
+	for i in "$@"
+	do
+	case $i in
+		-v=*|--version=*)
+		VERSION="${i#*=}"
+		shift
+		;;
+	
+}
+
 
 # looking for the firt argument ( -c or -h )  
 
@@ -57,7 +68,9 @@ if [ "$1" = "-c" ]; then
 		echo -e "Retry with sudo, if you dont have permission please contact your server administrator"
 		exit
 	fi
-	java_install
+	java_install #check for java install
+	argument
+
 	# checking if every server has a name and adding it to the SERVER_NAMES array
 	if (( "$#" == "$2 + 2" )); then
 		for ((i = 0 ; i+3 <= $# ; i++)); do
@@ -65,7 +78,6 @@ if [ "$1" = "-c" ]; then
 			SERVER_NAMES[$i]+=${!n}
 		done
 		echo -e "[$(date +"%T") LOG] you are creating those servers: ${SERVER_NAMES[*]}"
-		
 		# creation of the server folders
 		for i in ${SERVER_NAMES[@]}; do
 			echo -e "[$(date +"%T") LOG] creating folder ${SERVER_PATH:?}/$i"
@@ -78,7 +90,7 @@ if [ "$1" = "-c" ]; then
 				# Downloading paper if it is not alredy
 				if [ ! -e "paperclip.jar" ]; then
 					echo -e "[$(date +"%T") LOG] Downloading the latest version of PaperMC"
-					wget $PAPER_URL >/dev/null 2>&1
+					wget $PAPER_URL -O paperclip.jar >/dev/null 2>&1
 					RESULT=$?
 					if [ $RESULT != 0 ]; then
 						echo -e "------------------------------------------------------------"
