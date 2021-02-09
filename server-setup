@@ -1,5 +1,6 @@
 #!/bin/bash
 
+VERSION="1.16.5"
 PROXY_URL="https://papermc.io/api/v1/waterfall/${VERSION}/latest/download"
 PAPER_URL="https://papermc.io/api/v1/paper/${VERSION}/latest/download"
 SERVER_PATH=/srv/mc
